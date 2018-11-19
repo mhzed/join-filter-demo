@@ -29,7 +29,7 @@ import org.junit.Test;
  * @author minhongz@gmail.com
  *
  */
-public class DescendantGraphJoinTest extends SolrCloudTestCase {
+public class DescendantJoinTest extends SolrCloudTestCase {
 	static CloudSolrClient client;
 	static final int NodeCount = 5;		// How many solr nodes to create
 	
@@ -70,7 +70,7 @@ public class DescendantGraphJoinTest extends SolrCloudTestCase {
 	@BeforeClass
 	public static void setup() throws Exception {
 		Builder builder = configureCluster(NodeCount);
-		Path p = new File(DescendantGraphJoinTest.class.getResource("../../../../test_core/conf").toURI()).toPath();
+		Path p = new File(DescendantJoinTest.class.getResource("../../../../test_core/conf").toURI()).toPath();
 		builder.addConfig("_default", p);
     builder.configure();
 		cluster.waitForAllNodes(60000);
@@ -98,23 +98,43 @@ public class DescendantGraphJoinTest extends SolrCloudTestCase {
 		QueryResponse r;
 		r = client.query(DocCollection, graphJoinQuery("*:*", "0"));
 		assertEquals(13, r.getResults().size());
+		r = client.query(DocCollection, pathJoinQuery("*:*", "/0"));
+		assertEquals(13, r.getResults().size());
 		
 		r = client.query(DocCollection, graphJoinQuery("*:*", "3"));
+		assertEquals(4, r.getResults().size());		
+		r = client.query(DocCollection, pathJoinQuery("*:*", "/0/0"));
 		assertEquals(4, r.getResults().size());		
 	}
 	
 	/**
-	 * mainQuery is the DocCollection search query, id is the id of folder to filter by
+	 * Folder descendant filtering via graph query: traversing descendants by exploiting the
+	 * ParentField in each folder object.
 	 * 
-	 * @param mainQuery
-	 * @param id of folder
+	 * @param mainQuery is the DocCollection search query
+	 * @param folderId of folder to filter under
 	 * @return the search query
 	 */
-	SolrQuery graphJoinQuery(String mainQuery, String id) {
+	SolrQuery graphJoinQuery(String mainQuery, String folderId) {
 		return new SolrQuery(mainQuery).addFilterQuery(String.format(
 						"{!join fromIndex=%s from=%s to=%s}{!graph from=%s to=%s}%s:%s", 
 						FolderCollection, "id", "folder_id_s",
-						ParentField, IdField, IdField, ClientUtils.escapeQueryChars(id))).setRows(1000000);
+						ParentField, IdField, IdField, ClientUtils.escapeQueryChars(folderId))).setRows(1000000);
+	}
+	/**
+	 * Folder descendant filtering via descendant_path fieldType: find descendants by exploiting the
+	 * PathField in each folder object.
+	 * 
+	 * @param mainQuery is the DocCollection search query
+	 * @param path of folder to filter under
+	 * @return the search query
+	 */
+	
+	SolrQuery pathJoinQuery(String mainQuery, String path) {
+		return new SolrQuery(mainQuery).addFilterQuery(String.format(
+						"{!join fromIndex=%s from=%s to=%s}%s:%s", 
+						FolderCollection, "id", "folder_id_s",
+						PathField, ClientUtils.escapeQueryChars(path))).setRows(1000000);
 	}
 			
 	/**
