@@ -1,0 +1,1 @@
+# Solr Join Filter Demo
