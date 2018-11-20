@@ -45,24 +45,24 @@ public class DescendantJoinTest extends SolrCloudTestCase {
 	}
 	
 	/**
-	 * In solr cloud, create a newCollection on the same nodes as originalCollection,
+	 * In solr cloud, create a shadowCollection on the same nodes as originalCollection,
 	 * always with 1 shard and N replicas, where N = number of nodes hosting the originalCollection
 	 *   
 	 * @param client
 	 * @param originalCollection
-	 * @param newCollection
+	 * @param shadowCollection
 	 * @param config the name of config set to be use for newCollection
 	 * @return the collection create request to be processed
 	 * @throws IOException
 	 */
 	public static CollectionAdminRequest.Create shadowCreate(
 					CloudSolrClient client, String originalCollection,
-					String newCollection, String config) throws IOException {
+					String shadowCollection, String config) throws IOException {
 		Collection<String> nodeset = client.getClusterStateProvider().getCollection(originalCollection).getSlices()
 						.stream().flatMap((slice)-> slice.getReplicas().stream()).map((replica)->
 						replica.getNodeName()).distinct().collect(Collectors.toList()); 						
 		CollectionAdminRequest.Create req = CollectionAdminRequest.createCollection(
-						newCollection, config, 1, nodeset.size());
+						shadowCollection, config, 1, nodeset.size());
 		req.setCreateNodeSet(nodeset.stream().collect(Collectors.joining(",")));
 		return req;
 	}	
