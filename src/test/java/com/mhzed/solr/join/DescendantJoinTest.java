@@ -118,7 +118,7 @@ public class DescendantJoinTest extends SolrCloudTestCase {
 	SolrQuery graphJoinQuery(String mainQuery, String folderId) {
 		return new SolrQuery(mainQuery).addFilterQuery(String.format(
 						"{!join fromIndex=%s from=%s to=%s}{!graph from=%s to=%s}%s:%s", 
-						FolderCollection, "id", "folder_id_s",
+						FolderCollection, IdField, "folder_id_s",
 						ParentField, IdField, IdField, ClientUtils.escapeQueryChars(folderId))).setRows(1000000);
 	}
 	/**
@@ -133,7 +133,7 @@ public class DescendantJoinTest extends SolrCloudTestCase {
 	SolrQuery pathJoinQuery(String mainQuery, String path) {
 		return new SolrQuery(mainQuery).addFilterQuery(String.format(
 						"{!join fromIndex=%s from=%s to=%s}%s:%s", 
-						FolderCollection, "id", "folder_id_s",
+						FolderCollection, IdField, "folder_id_s",
 						PathField, ClientUtils.escapeQueryChars(path))).setRows(1000000);
 	}
 			
